@@ -1,0 +1,38 @@
+import tensorflow as tf
+
+MODEL_PATH = "/path/to/mode/1518020390"
+test_data = [6.4, 2.8, 5.6, 2.2, 5.6]  # took one row from training data for testing
+
+
+def main():
+    with tf.Session() as sess:
+        tf.saved_model.loader.load(sess, [tf.saved_model.tag_constants.SERVING], MODEL_PATH)
+        predictor_input_feature = {
+            'x': tf.train.Feature(
+                float_list=tf.train.FloatList(
+                    value=test_data
+                )
+            )
+        }
+
+        input_for_predictor = tf.train.Example(
+            features=tf.train.Features(
+                feature=predictor_input_feature
+            )
+        )
+
+        predictor = tf.contrib.predictor.from_saved_model(MODEL_PATH)
+
+        """"
+            You can get the tensors you put in the model by
+            name or some other attrib just like below
+            input_tensor = tf.get_default_graph().get_tensor_by_name("whatever_name_you_gave_in_the_model_receiver:0")
+        """
+
+        serialized_input = input_for_predictor.SerializeToString()
+        results = predictor({"inputs": [serialized_input]})
+        print("Your Prediction Results Are:", results)
+
+
+if __name__ == "__main__":
+    main()
